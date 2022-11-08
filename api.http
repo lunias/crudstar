@@ -1,0 +1,76 @@
+# Create a patient
+POST http://localhost:8080/api/patient
+Content-Type: application/json
+
+{
+    "firstName": "Apple",
+    "lastName": "Anderson",
+    "dateOfBirth": "1968-05-29",
+    "medicalRecordNumber": "ASDF12345",
+    "address": "12555 92nd Pl N"
+}
+
+# Get all patients (pageable and multi sortable)
+GET http://localhost:8080/api/patient?page=0&size=20&sort=dateOfBirth,asc&sort=lastName,desc
+Accept: application/json
+
+# Get all patients (pageable, multi sortable, and filter by string)
+GET http://localhost:8080/api/patient?page=0&size=20&sort=dateOfBirth,asc&sort=lastName,desc&filters=[{"key": "firstName", "value": "q", "matchMode": "startsWith"}]
+Accept: application/json
+
+# Get all patients (pageable, multi sortable, and filter by date)
+GET http://localhost:8080/api/patient?page=0&size=20&sort=firstName,asc&filters=[{"key": "dateOfBirth", "operator": "or", "constraints": [{"value": "1901-01-11", "matchMode": "dateIsAfter"}, {"value": "1901-01-11", "matchMode": "dateIs"}]}]
+Accept: application/json
+
+# Get a patient
+:patientId = 3cc8bba6-c2ea-45e1-98ae-f4cd3cac22828cddbdb3-d7f0-4e83-8c93-84beb99a14df
+GET http://localhost:8080/api/patient/:patientId
+Accept: application/json
+
+# Search patients by field (supports custom operator)
+POST http://localhost:8080/api/patient/search
+Content-Type: application/json
+
+{
+    "key": "firstName",
+    "operation": "~",
+    "value": "appl",
+    "sortKey": "firstName",
+    "sortDirection": "ASC",
+    "pageSize": 20,
+    "pageNumber": 0
+}
+
+# Search patients full text (web search syntax, but does not support custom operator)
+POST http://localhost:8080/api/patient/search
+Content-Type: application/json
+
+{
+    "value": "Apple",
+    "sortKey": "firstName",
+    "sortDirection": "ASC",
+    "pageSize": 20,
+    "pageNumber": 0
+}
+
+# Patch a patient (supports RFC 6902 JSON Patch)
+PATCH http://localhost:8080/api/patient/:patientId
+Content-Type: application/json
+
+[
+  { "op": "replace", "path": "/firstName", "value": "Huged" }
+]
+
+# Get a patient's patches
+GET http://localhost:8080/api/patient/:patientId/patches?page=0&size=20
+Accept: application/json
+
+# Get a patient's suggestions
+GET http://localhost:8080/api/patient/:patientId/suggestions
+Accept: application/json
+
+# Delete a patient
+DELETE http://localhost:8080/api/patient/:patientId
+
+# Delete all patients
+DELETE http://localhost:8080/api/patient
