@@ -147,13 +147,12 @@ public class PatientService {
 
         List<Version<PatientEntity>> patientEntityVersions;
         if (snapshotId != null) {
-            // TODO fetch latest versions? need to consider asOf?
-            // TODO many getLatestVersion calls need to to account for asOf
+            Map<String, Long> latestVersions = getLatestVersions(patientEntityIds, snapshotId);
             patientEntityVersions = patientEntities.stream().map(
                             patientEntity -> new Version<>(patientEntity,
                                     versionsAsOfDateTime.get(patientEntity.getId()),
-                                    versionsAsOfDateTime.get(patientEntity.getId()),
-                                    patches.get(patches.size() - 1).getCreatedAt()))
+                                    latestVersions.get(patientEntity.getId().toString()),
+                                    dateTime))
                     .collect(Collectors.toList());
 
             return new PageImpl<>(patientEntityVersions, pageable,
@@ -288,7 +287,7 @@ public class PatientService {
         PatientSnapshotEntity snapshot = patientSnapshotEntityRepository.findById(snapshotId)
                 .orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
 
-        return getVersions(Collections.singletonList(patientId), snapshotId, snapshot.getAsOf())
+        return getVersions(Collections.singletonList(patientId), snapshotId, LocalDateTime.now())
                 .get(patientId.toString())
                 .stream()
                 .map(patientEntityVersion -> new Snapshot<>(patientEntityVersion, snapshotId))
@@ -360,7 +359,7 @@ public class PatientService {
         Map<String, Long> latestVersions;
         if (snapshotId != null) {
             patchTuples = patientPatchEntityRepository.findPatches(patientIds, snapshotId, dateTime);
-            latestVersions = getLatestVersionsAsOfDateTime(patientIds, dateTime, snapshotId);
+            latestVersions = getLatestVersions(patientIds, snapshotId);
         } else {
             patchTuples = patientPatchEntityRepository.findPatches(patientIds);
             latestVersions = getLatestVersions(patientIds);
@@ -420,6 +419,18 @@ public class PatientService {
 
         List<PatientPatchEntityRepository.PatchCount> latestVersions =
                 patientPatchEntityRepository.countPatches(patientIds);
+
+        return latestVersions.stream()
+                .collect(Collectors.toMap(
+                        PatientPatchEntityRepository.PatchCount::getPatientId,
+                        PatientPatchEntityRepository.PatchCount::getCount));
+    }
+
+    @Transactional(readOnly = true)
+    public Map<String, Long> getLatestVersions(List<UUID> patientIds, UUID snapshotId) {
+
+        List<PatientPatchEntityRepository.PatchCount> latestVersions =
+                patientPatchEntityRepository.countPatches(patientIds, snapshotId);
 
         return latestVersions.stream()
                 .collect(Collectors.toMap(

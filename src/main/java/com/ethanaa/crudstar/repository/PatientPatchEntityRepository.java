@@ -70,9 +70,9 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
                     "    patient_entity pe " +
                     "    JOIN patient_patch_entity ppe ON pe.id = ppe.patient_id " +
                     "  WHERE " +
-                    "    (ppe.created_at <= :localDateTime " +
-                    "      AND ppe.snapshot_id IS NULL) " +
-                    "    OR ppe.snapshot_id = :snapshotId " +
+                    "    ppe.created_at <= :localDateTime " +
+                    "      AND (ppe.snapshot_id IS NULL " +
+                    "    OR ppe.snapshot_id = :snapshotId)" +
                     "  ORDER BY " +
                     "    pe.id, " +
                     "    ppe.created_at ASC " +
@@ -86,9 +86,9 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
                     "  patients_with_patches " +
                     "  JOIN patient_patch_entity ppe ON patient_entity_id = ppe.patient_id " +
                     "WHERE " +
-                    "  (ppe.created_at <= :localDateTime " +
-                    "    AND ppe.snapshot_id IS NULL) " +
-                    "  OR ppe.snapshot_id = :snapshotId " +
+                    "  ppe.created_at <= :localDateTime " +
+                    "    AND (ppe.snapshot_id IS NULL " +
+                    "  OR ppe.snapshot_id = :snapshotId) " +
                     "ORDER BY " +
                     "  patient_entity_id, " +
                     "  ppe.created_at ASC")
@@ -124,9 +124,9 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
             value = "SELECT COUNT(DISTINCT pe.id) " +
                     "FROM patient_entity pe " +
                     "JOIN patient_patch_entity ppe ON pe.id = ppe.patient_id " +
-                    "WHERE (ppe.created_at <= :localDateTime " +
-                    "  AND ppe.snapshot_id IS NULL) " +
-                    "  OR ppe.snapshot_id = :snapshotId")
+                    "WHERE ppe.created_at <= :localDateTime " +
+                    "  AND (ppe.snapshot_id IS NULL " +
+                    "  OR ppe.snapshot_id = :snapshotId)")
     Long countSnapshotPatientsWithPatchesAsOfDateTime(LocalDateTime localDateTime, UUID snapshotId);
 
     @Query(nativeQuery = true,
@@ -163,7 +163,7 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
                     "WHERE ppe.patient_id = :patientId " +
                     "  AND ppe.created_at <= :localDateTime " +
                     "    AND (ppe.snapshot_id IS NULL " +
-                    "  OR ppe.snapshot_id = :snapshotId)" +
+                    "  OR ppe.snapshot_id = :snapshotId) " +
                     "ORDER BY ppe.created_at DESC")
     Page<PatientPatchEntity> findPatchesAsOfDateTime(
             Pageable pageable, UUID patientId, LocalDateTime localDateTime, UUID snapshotId);
@@ -213,10 +213,9 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
                     "    ppe.created_at as createdAt " +
                     "FROM patient_patch_entity ppe " +
                     "WHERE ppe.patient_id IN (:patientIds) " +
-                    "  AND ( " +
-                    "    (ppe.created_at <= :localDateTime AND ppe.snapshot_id IS NULL) " +
-                    "    OR ppe.snapshot_id = :snapshotId " +
-                    "  ) " +
+                    "  AND ppe.created_at <= :localDateTime " +
+                    "  AND (ppe.snapshot_id IS NULL " +
+                    "    OR ppe.snapshot_id = :snapshotId) " +
                     "GROUP BY ppe.id, ppe.patient_id " +
                     "ORDER BY ppe.patient_id, ppe.created_at ASC")
     List<PatientIdPatchTuple> findPatches(List<UUID> patientIds, UUID snapshotId, LocalDateTime localDateTime);
@@ -240,6 +239,15 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
                     "  AND ppe.snapshot_id IS NULL " +
                     "GROUP BY ppe.patient_id")
     List<PatchCount> countPatches(List<UUID> patientIds);
+
+    @Query(nativeQuery = true,
+            value = "SELECT Cast(ppe.patient_id as varchar) AS patientId, COUNT(ppe.id) AS count " +
+                    "FROM patient_patch_entity ppe " +
+                    "WHERE ppe.patient_id IN (:patientIds) " +
+                    "  AND (ppe.snapshot_id IS NULL " +
+                    "    OR ppe.snapshot_id = :snapshotId)" +
+                    "GROUP BY ppe.patient_id")
+    List<PatchCount> countPatches(List<UUID> patientIds, UUID snapshotId);
 
     @Query(nativeQuery = true,
             value = "SELECT COUNT(ppe.id) " +
