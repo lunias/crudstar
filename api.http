@@ -3,7 +3,7 @@ POST http://localhost:8080/api/patient
 Content-Type: application/json
 
 {
-    "firstName": "Apple",
+    "firstName": "Mango",
     "lastName": "Anderson",
     "dateOfBirth": "1968-05-29",
     "medicalRecordNumber": "ASDF12345",
@@ -23,8 +23,12 @@ GET http://localhost:8080/api/patient?page=0&size=20&sort=firstName,asc&filters=
 Accept: application/json
 
 # Get a patient
-:patientId = 3cc8bba6-c2ea-45e1-98ae-f4cd3cac22828cddbdb3-d7f0-4e83-8c93-84beb99a14df
+:patientId = 6b8ba56e-7a4e-4885-8956-ff3a5809d909
 GET http://localhost:8080/api/patient/:patientId
+Accept: application/json
+
+# Search all patients (pageable, multi sortable, and filter)
+GET http://localhost:8080/api/patient/search?query=anderson&page=0&size=20&sort=firstName,asc&filters=[{"key":"firstName","operator":"or","constraints":[{"value":"a","matchMode":"startsWith"}]}]
 Accept: application/json
 
 # Search patients by field (supports custom operator)

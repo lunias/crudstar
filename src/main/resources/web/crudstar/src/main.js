@@ -17,7 +17,7 @@ import Menu from 'primevue/menu'
 import Toast from 'primevue/toast'
 import ToastService from 'primevue/toastservice'
 
-import 'primevue/resources/themes/saga-blue/theme.css'
+import 'primevue/resources/themes/mdc-dark-deeppurple/theme.css'
 import 'primevue/resources/primevue.min.css'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'

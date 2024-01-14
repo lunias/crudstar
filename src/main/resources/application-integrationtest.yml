@@ -2,11 +2,6 @@
 #logging.level.org.hibernate.type.descriptor.sql: TRACE
 logging.level.net.ttddyy.dsproxy.listener: DEBUG
 
-springdoc.swagger-ui:
-  operationsSorter: method
-  tagsSorter: alpha
-  filter: true
-
 spring:
   profiles:
     active: development

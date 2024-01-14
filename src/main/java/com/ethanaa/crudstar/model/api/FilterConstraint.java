@@ -10,6 +10,11 @@ public class FilterConstraint {
 
     }
 
+    public FilterConstraint(String matchMode, String value) {
+        this.matchMode = matchMode;
+        this.value = value;
+    }
+
     public String getValue() {
         return value;
     }

@@ -1,9 +1,9 @@
 package com.ethanaa.crudstar.repository.specification;
 
-import com.ethanaa.crudstar.model.api.FilterConstraint;
 import com.ethanaa.crudstar.model.api.ApiFilter;
+import com.ethanaa.crudstar.model.api.FilterConstraint;
 import com.ethanaa.crudstar.model.persist.patient.Patient;
-import com.ethanaa.crudstar.model.persist.patient.PatientEntity;
+import com.ethanaa.crudstar.model.persist.patient.patch.PatientPatchEntity;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
@@ -15,13 +15,13 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PatientEntitySpecification implements Specification<PatientEntity> {
+public class PatientPatchEntitySpecification implements Specification<PatientPatchEntity> {
 
     private String searchQuery;
     private List<ApiFilter> filters;
     private Pageable pageable;
 
-    public PatientEntitySpecification(String searchQuery, List<ApiFilter> filters, Pageable pageable) {
+    public PatientPatchEntitySpecification(String searchQuery, List<ApiFilter> filters, Pageable pageable) {
 
         this.searchQuery = searchQuery;
         this.filters = filters;
@@ -29,14 +29,17 @@ public class PatientEntitySpecification implements Specification<PatientEntity> 
     }
 
     @Override
-    public Predicate toPredicate(Root<PatientEntity> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+    public Predicate toPredicate(Root<PatientPatchEntity> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
 
         List<Predicate> predicates = new ArrayList<>();
+
+        // TODO convert findPatchesAsOfDateTime query
+        Subquery<PatientPatchEntity> subquery = query.subquery(PatientPatchEntity.class);
 
         if (StringUtils.hasText(searchQuery)) {
             predicates.add(builder.equal(
                     builder.function("json_search_function", Boolean.class,
-                            root.get("patient"), builder.literal(searchQuery)),
+                            root.get("patch"), builder.literal(searchQuery)),
                     true));
         }
 

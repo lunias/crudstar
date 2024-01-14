@@ -1,7 +1,7 @@
 package com.ethanaa.crudstar.model.persist.patient;
 
-import com.ethanaa.crudstar.model.persist.patient.patch.PatientPatchEntity;
 import com.ethanaa.crudstar.model.persist.UUIDEntity;
+import com.ethanaa.crudstar.model.persist.patient.patch.PatientPatchEntity;
 import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import org.hibernate.annotations.DynamicUpdate;
 import org.hibernate.annotations.Type;

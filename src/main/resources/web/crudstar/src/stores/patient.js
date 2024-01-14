@@ -20,13 +20,14 @@ export const usePatientStore = defineStore({
       lastName: { operator: FilterOperator.OR, constraints: [{ value: '', matchMode: FilterMatchMode.STARTS_WITH }] },
       dateOfBirth: { operator: FilterOperator.OR, constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }] },
       medicalRecordNumber: { operator: FilterOperator.OR, constraints: [{ value: '', matchMode: FilterMatchMode.CONTAINS }] }
-    }
+    },
+    query: ''
   }),
   getters: {
 
   },
   actions: {
-    async fetchPatients(requestParams = { page: 0, size: 20, sortField: 'lastName', sortOrder: 1, filters: this.filters }) {
+    async fetchPatients(requestParams = { page: 0, size: 20, sortField: 'lastName', sortOrder: 1, filters: this.filters, query: '' }) {
       this.patients = []
       this.loading = true
       try {
@@ -58,14 +59,18 @@ export const usePatientStore = defineStore({
         if (filters.length) {
           filterParam = '&filters=' + encodeURI(JSON.stringify(filters))
         }
+        let queryParam = ''
+        if (requestParams.query) {
+          queryParam = '&query=' + encodeURI(requestParams.query)
+        }
         const patients = await fetch(
           '/api/patient?page=' + requestParams.page +
-            '&size=' + requestParams.size + sort + filterParam)
+            '&size=' + requestParams.size + sort + filterParam + queryParam)
         .then((response) => response.json())
-        const patientModels = patients._embedded.patientModelList
+        const patientModels = patients?._embedded?.patientModelList || []
         for (let i = 0; i < patientModels.length; i++) {
           const selfLink = patientModels[i]._links.self.href
-          patientModels[i].id = selfLink.substring(selfLink.lastIndexOf('/') + 1)
+          patientModels[i].id = selfLink.substring(selfLink.lastIndexOf('/') + 1).replace("{?asOf}", "")
         }
         this.patients = patientModels
         this.pageNumber = patients.page.number
@@ -74,6 +79,7 @@ export const usePatientStore = defineStore({
         this.totalPages = patients.page.totalPages
         this.sortField = requestParams.sortField
         this.sortOrder = requestParams.sortOrder
+        this.query = requestParams.query
       } catch (error) {
         this.error = error
       } finally {
@@ -87,7 +93,7 @@ export const usePatientStore = defineStore({
         const patient = await fetch(`/api/patient/${id}`)
         .then((response) => response.json())
         const selfLink = patient._links.self.href
-        patient.id = selfLink.substring(selfLink.lastIndexOf('/') + 1)
+        patient.id = selfLink.substring(selfLink.lastIndexOf('/') + 1).replace("{?asOf}", "")
         this.patient = patient
       } catch (error) {
         this.error = error
@@ -96,16 +102,16 @@ export const usePatientStore = defineStore({
       }
     },
     async onPage(event) {
-      this.fetchPatients({ page: event.page, size: event.rows, sortField: event.sortField, sortOrder: event.sortOrder, filters: event.filters })
+      this.fetchPatients({ page: event.page, size: event.rows, sortField: event.sortField, sortOrder: event.sortOrder, filters: event.filters, query: this.query })
     },
     async onSort(event) {
-      this.fetchPatients({ page: 0, size: this.pageSize, sortField: event.sortField, sortOrder: event.sortOrder, filters: event.filters })
+      this.fetchPatients({ page: 0, size: this.pageSize, sortField: event.sortField, sortOrder: event.sortOrder, filters: event.filters, query: this.query })
     },
     async onFilter(event) {
-      this.fetchPatients({ page: 0, size: this.pageSize, sortField: event.sortField, sortOrder: event.sortOrder, filters: event.filters })
+      this.fetchPatients({ page: 0, size: this.pageSize, sortField: event.sortField, sortOrder: event.sortOrder, filters: event.filters, query: this.query })
     },
-    async keywordSearch() {
-      console.log(this.filters.global.value)
+    async keywordSearch(query) {
+      this.fetchPatients({ page: 0, size: this.pageSize, sortField: this.sortField, sortOrder: this.sortOrder, filters: this.filters, query: query })
     },
     async clearFilters() {
       const initFilters = {
@@ -116,7 +122,7 @@ export const usePatientStore = defineStore({
         medicalRecordNumber: { operator: FilterOperator.OR, constraints: [{ value: '', matchMode: FilterMatchMode.CONTAINS }] }
       }
       this.filters = initFilters
-      this.fetchPatients({ page: 0, size: this.pageSize, sortField: this.sortField, sortOrder: this.sortOrder, filters: initFilters })
+      this.fetchPatients({ page: 0, size: this.pageSize, sortField: this.sortField, sortOrder: this.sortOrder, filters: initFilters, query: this.query })
     }
   }
 })

@@ -14,6 +14,12 @@ public class ApiFilter {
 
     }
 
+    public ApiFilter(String key, String operator, List<FilterConstraint> constraints) {
+        this.key = key;
+        this.operator = operator;
+        this.constraints = constraints;
+    }
+
     public String getKey() {
         return key;
     }

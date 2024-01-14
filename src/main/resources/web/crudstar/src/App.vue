@@ -1,6 +1,9 @@
 <script setup>
   import { RouterView } from 'vue-router'
   import { ref } from 'vue'
+  import { usePatientStore } from './stores/patient'
+
+  const { keywordSearch } = usePatientStore()
 
   const items = ref([{
     label: 'File',
@@ -60,7 +63,13 @@
   const patientQuery = ref()
 
   const searchPatients = () => {
-    console.log(patientQuery.value)
+    return keywordSearch(patientQuery.value)
+  }
+
+  const searchPatientsIfEmpty = (event) => {
+    if (!patientQuery.value) {
+      return keywordSearch()
+    }
   }
 
 </script>
@@ -75,7 +84,12 @@
         </router-link>
       </template>
       <template #end>
-        <InputText v-model="patientQuery" placeholder="Search patient data" type="text" @keydown.enter="searchPatients()"/>
+        <span class="p-input-icon-right">
+          <i id="search-icon" class="pi pi-search" @click="searchPatients"/>
+          <InputText class="p-inputtext-lg" v-model="patientQuery"
+          placeholder="Search patient data" type="text"
+          @keydown.enter="searchPatients" @blur="searchPatientsIfEmpty"/>
+        </span>
       </template>
     </Menubar>
   </div>
@@ -94,12 +108,6 @@
 </template>
 
 <style scoped>
-  html,
-  body {
-    height: 100%;
-    margin: 0;
-  }
-
   .box {
     display: flex;
     flex-flow: column;
@@ -119,5 +127,9 @@
   }
   .row >>> .p-submenu-list {
     z-index: 2;
+  }
+
+  #search-icon {
+    cursor: pointer;
   }
 </style>
