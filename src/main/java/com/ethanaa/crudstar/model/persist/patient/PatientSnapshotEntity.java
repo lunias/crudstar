@@ -25,6 +25,14 @@ public class PatientSnapshotEntity extends UUIDEntity {
     )
     private List<PatientPatchEntity> patches = new ArrayList<>();
 
+    @OneToMany(
+            mappedBy = "snapshot",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<PatientEntity> patients = new ArrayList<>();
+
     public PatientSnapshotEntity() {
 
     }
@@ -35,6 +43,10 @@ public class PatientSnapshotEntity extends UUIDEntity {
 
     public List<PatientPatchEntity> getPatches() {
         return patches;
+    }
+
+    public List<PatientEntity> getPatients() {
+        return patients;
     }
 
     public LocalDateTime getAsOf() {
@@ -55,5 +67,17 @@ public class PatientSnapshotEntity extends UUIDEntity {
 
         patches.remove(patientPatchEntity);
         patientPatchEntity.setSnapshot(null);
+    }
+
+    public void addPatient(PatientEntity patientEntity) {
+
+        patients.add(patientEntity);
+        patientEntity.setSnapshot(this);
+    }
+
+    public void removePatient(PatientEntity patientEntity) {
+
+        patients.remove(patientEntity);
+        patientEntity.setSnapshot(null);
     }
 }

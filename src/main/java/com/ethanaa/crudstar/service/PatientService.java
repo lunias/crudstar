@@ -70,8 +70,19 @@ public class PatientService {
 
     public Snapshot<PatientEntity> create(Patient patient, UUID snapshotId) {
 
-        // TODO create new patient in snapshot, pass snapshot_id to patient?
-        return null;
+        PatientSnapshotEntity snapshot = patientSnapshotEntityRepository.findById(snapshotId)
+                .orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
+
+        PatientEntity patientEntity = new PatientEntity(patient, snapshot);
+        JsonNode patientJson = objectMapper.valueToTree(patientEntity.getPatient());
+        JsonNode createPatch = JsonDiff.asJson(objectMapper.createObjectNode(), patientJson);
+        try {
+            patientEntity.addPatch(new PatientPatchEntity(objectMapper.writeValueAsString(createPatch), snapshot));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        return new Snapshot<>(patientEntityRepository.save(patientEntity), 1, 1, snapshotId);
     }
 
     public void create(Iterable<Patient> patients) {
@@ -242,9 +253,6 @@ public class PatientService {
     @Transactional(readOnly = true)
     public Snapshot<PatientEntity> getSnapshot(UUID patientId, UUID snapshotId, LocalDateTime dateTime) {
 
-        PatientSnapshotEntity snapshot = patientSnapshotEntityRepository.findById(snapshotId)
-                .orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
-
         LocalDateTime asOf = dateTime;
         if (asOf == null) {
             asOf = LocalDateTime.now();
@@ -255,9 +263,6 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public Page<Snapshot<PatientEntity>> getSnapshot(Pageable pageable, UUID snapshotId, LocalDateTime dateTime) {
-
-        PatientSnapshotEntity snapshot = patientSnapshotEntityRepository.findById(snapshotId)
-                .orElseThrow(() -> new SnapshotNotFoundException(snapshotId));
 
         LocalDateTime asOf = dateTime;
         if (asOf == null) {

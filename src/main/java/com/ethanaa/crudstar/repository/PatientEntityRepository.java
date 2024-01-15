@@ -17,12 +17,12 @@ import java.util.UUID;
 public interface PatientEntityRepository extends JpaRepository<PatientEntity, UUID>, JpaSpecificationExecutor<PatientEntity> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT p FROM PatientEntity p WHERE p.id = :id")
+    @Query("SELECT p FROM PatientEntity p WHERE p.id = :id and p.snapshot is null")
     Optional<PatientEntity> findByIdWithLock(UUID id);
 
     // must expose as native query for sorting on json properties
     @Override
-    @Query(value = "select e.* from patient_entity e",
+    @Query(value = "select p.* from patient_entity p",
             nativeQuery = true)
     Page<PatientEntity> findAll(Pageable pageable);
 

@@ -48,7 +48,9 @@ public class CrudstarIntegrationTests {
     private String existingPatientLink;
     private PatientModel existingPatientModel;
     private String newPatientLink;
+    private String newSnapshotPatientLink;
     private PatientModel newPatientModel;
+    private PatientModel newSnapshotPatientModel;
     private String updatedPatientLink;
     private PatientModel updatedPatientModel;
     private PatientModel updatedSnapshotPatientModel;
@@ -63,24 +65,24 @@ public class CrudstarIntegrationTests {
         public static final int CREATE_PATIENT = 3;
         public static final int UPDATE_PATIENT = 4;
         public static final int PATIENT_VERSION = 5;
-
         public static final int PATIENT_SEARCH = 6;
         public static final int CREATE_SNAPSHOT = 7;
         public static final int GET_SNAPSHOTS = 8;
         public static final int GET_SNAPSHOT_PATIENTS = 9;
         public static final int GET_SNAPSHOT_PATIENT = 10;
-        public static final int UPDATE_SNAPSHOT_PATIENT = 11;
-        public static final int SNAPSHOT_PATIENT_VERSION = 12;
-        public static final int GET_PATIENTS_AS_OF = 13;
-        public static final int GET_PATIENT_AS_OF = 14;
-        public static final int GET_SNAPSHOT_PATIENTS_AS_OF = 15;
-        public static final int GET_SNAPSHOT_PATIENT_AS_OF = 16;
-        public static final int GET_PATIENTS_AGAIN = 17;
-        public static final int GET_PATIENT_AGAIN = 18;
-        public static final int GET_SNAPSHOT_PATIENTS_AGAIN = 19;
-        public static final int GET_SNAPSHOT_PATIENT_AGAIN = 20;
-        public static final int DELETE_SNAPSHOT = 21;
-        public static final int DELETE_PATIENT = 22;
+        public static final int CREATE_SNAPSHOT_PATIENT = 11;
+        public static final int UPDATE_SNAPSHOT_PATIENT = 12;
+        public static final int SNAPSHOT_PATIENT_VERSION = 13;
+        public static final int GET_PATIENTS_AS_OF = 14;
+        public static final int GET_PATIENT_AS_OF = 15;
+        public static final int GET_SNAPSHOT_PATIENTS_AS_OF = 16;
+        public static final int GET_SNAPSHOT_PATIENT_AS_OF = 17;
+        public static final int GET_PATIENTS_AGAIN = 18;
+        public static final int GET_PATIENT_AGAIN = 19;
+        public static final int GET_SNAPSHOT_PATIENTS_AGAIN = 20;
+        public static final int GET_SNAPSHOT_PATIENT_AGAIN = 21;
+        public static final int DELETE_SNAPSHOT = 22;
+        public static final int DELETE_PATIENT = 23;
 
     }
 
@@ -250,7 +252,7 @@ public class CrudstarIntegrationTests {
             PatientModel newPatientModel = new PatientModel();
             BeanUtils.copyProperties(CrudstarIntegrationTests.this.existingPatientModel, newPatientModel);
 
-            String firstName = "Test " + UUID.randomUUID();
+            String firstName = "Test-Create " + UUID.randomUUID();
             newPatientModel.setFirstName(firstName);
 
             MvcResult result = mvc.perform(post("/api/patient")
@@ -288,7 +290,7 @@ public class CrudstarIntegrationTests {
             PatientModel updatedPatientModel = new PatientModel();
             BeanUtils.copyProperties(CrudstarIntegrationTests.this.newPatientModel, updatedPatientModel);
 
-            String firstName = "Test " + UUID.randomUUID();
+            String firstName = "Test-Update " + UUID.randomUUID();
             updatedPatientModel.setFirstName(firstName);
 
             MvcResult result = mvc.perform(put(newPatientLink)
@@ -320,7 +322,7 @@ public class CrudstarIntegrationTests {
         @DisplayName("Should patch a patient")
         public void patchPatient() throws Exception {
 
-            String firstName = "Test-Patched " + UUID.randomUUID();
+            String firstName = "Test-Patch " + UUID.randomUUID();
 
             String patch = "[{\"op\": \"replace\", \"path\": \"/firstName\", \"value\": \"" + firstName + "\"}]";
 
@@ -434,7 +436,7 @@ public class CrudstarIntegrationTests {
 
         @Test
         @Order(4)
-        @DisplayName("Should return the difference between a patient version and its previous version")
+        @DisplayName("Should return the diff between a patient version and its previous version")
         public void patientVersionDiffPrevious() throws Exception {
             MvcResult result = mvc.perform(get(this.diffAgainstPreviousVersionLink)
                             .contentType(MediaType.APPLICATION_JSON))
@@ -450,7 +452,7 @@ public class CrudstarIntegrationTests {
 
         @Test
         @Order(5)
-        @DisplayName("Should return the difference between a patient version and its next version")
+        @DisplayName("Should return the diff between a patient version and its next version")
         public void patientVersionDiffNext() throws Exception {
             MvcResult result = mvc.perform(get(this.diffAgainstNextVersionLink)
                             .contentType(MediaType.APPLICATION_JSON))
@@ -467,7 +469,7 @@ public class CrudstarIntegrationTests {
 
     @Order(TestStep.PATIENT_SEARCH)
     @Nested
-    @DisplayName("Patient Search")
+    @DisplayName("Search Patients")
     @TestInstance(TestInstance.Lifecycle.PER_CLASS)
     @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
     class PatientSearch {
@@ -794,6 +796,44 @@ public class CrudstarIntegrationTests {
         }
     }
 
+    @Order(TestStep.CREATE_SNAPSHOT_PATIENT)
+    @Nested
+    @DisplayName("Create Snapshot Patient")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class CreateSnapshotPatient {
+
+        @Test
+        @Order(1)
+        @DisplayName("Should return a new snapshot patient")
+        public void createSnapshotPatient() throws Exception {
+            PatientModel newPatientModel = new PatientModel();
+            BeanUtils.copyProperties(CrudstarIntegrationTests.this.existingPatientModel, newPatientModel);
+
+            String firstName = "Test-Snapshot-Create " + UUID.randomUUID();
+            newPatientModel.setFirstName(firstName);
+
+            MvcResult result = mvc.perform(post(
+                    "/api/patient/snapshot/" + CrudstarIntegrationTests.this.nowSnapshotId)
+                            .content(objectMapper.writeValueAsString(newPatientModel))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .accept(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isCreated())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$.firstName").value(firstName))
+                    .andExpect(jsonPath("$._links.keys()",
+                            containsInAnyOrder("self", "patches", "diff")))
+                    .andReturn();
+
+            String content = result.getResponse().getContentAsString();
+            JsonNode root = objectMapper.readTree(content);
+
+            CrudstarIntegrationTests.this.newSnapshotPatientModel = objectMapper.convertValue(root, PatientModel.class);
+            CrudstarIntegrationTests.this.newSnapshotPatientLink = result.getResponse().getHeader("Location");
+        }
+    }
+
     @Order(TestStep.UPDATE_SNAPSHOT_PATIENT)
     @Nested
     @DisplayName("Update Snapshot Patient")
@@ -808,7 +848,7 @@ public class CrudstarIntegrationTests {
             PatientModel updatedPatientModel = new PatientModel();
             BeanUtils.copyProperties(CrudstarIntegrationTests.this.patchedPatientModel, updatedPatientModel);
 
-            String firstName = "Test-Snapshot " + UUID.randomUUID();
+            String firstName = "Test-Snapshot-Update " + UUID.randomUUID();
             updatedPatientModel.setFirstName(firstName);
 
             MvcResult result = mvc.perform(put(CrudstarIntegrationTests.this.updatedPatientLink
@@ -1436,9 +1476,9 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
                             everyItem(hasItems("self", "patches"))))
                     .andExpect(jsonPath("$._embedded.patientModelList[0].firstName").value(
-                            CrudstarIntegrationTests.this.updatedSnapshotPatientModel.getFirstName()))
+                            CrudstarIntegrationTests.this.newSnapshotPatientModel.getFirstName()))
                     .andExpect(jsonPath("$._embedded.patientModelList[0]._links.self.href").value(
-                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
+                            startsWith(CrudstarIntegrationTests.this.newSnapshotPatientLink)))
                     .andExpect(jsonPath("$._links.keys()",
                             containsInAnyOrder("first", "self", "next", "last")))
                     .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))

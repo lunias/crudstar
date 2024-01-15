@@ -31,6 +31,9 @@ public class PatientEntity extends UUIDEntity {
     private List<PatientPatchEntity> patches = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
+    private PatientSnapshotEntity snapshot;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     private PatientFieldConfigEntity patientFieldConfigEntity;
 
     public PatientEntity() {
@@ -39,6 +42,11 @@ public class PatientEntity extends UUIDEntity {
 
     public PatientEntity(Patient patient) {
         this.patient = patient;
+    }
+
+    public PatientEntity(Patient patient, PatientSnapshotEntity snapshot) {
+        this(patient);
+        this.snapshot = snapshot;
     }
 
     public Patient getPatient() {
@@ -63,6 +71,14 @@ public class PatientEntity extends UUIDEntity {
 
         patches.remove(patientPatchEntity);
         patientPatchEntity.setPatient(null);
+    }
+
+    public PatientSnapshotEntity getSnapshot() {
+        return snapshot;
+    }
+
+    public void setSnapshot(PatientSnapshotEntity snapshot) {
+        this.snapshot = snapshot;
     }
 
     public PatientFieldConfigEntity getPatientFieldConfigEntity() {

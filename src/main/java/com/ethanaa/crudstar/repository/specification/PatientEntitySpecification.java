@@ -148,9 +148,10 @@ public class PatientEntitySpecification implements Specification<PatientEntity> 
         query.orderBy(orders);
 
         if (!predicates.isEmpty()) {
+            predicates.add(root.get("snapshot").isNull());
             return builder.and(predicates.toArray(new Predicate[0]));
         }
 
-        return null;
+        return builder.and(root.get("snapshot").isNull());
     }
 }
