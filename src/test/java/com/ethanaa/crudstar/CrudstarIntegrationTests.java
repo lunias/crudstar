@@ -77,8 +77,10 @@ public class CrudstarIntegrationTests {
         public static final int GET_SNAPSHOT_PATIENT_AS_OF = 16;
         public static final int GET_PATIENTS_AGAIN = 17;
         public static final int GET_PATIENT_AGAIN = 18;
-        public static final int DELETE_SNAPSHOT = 19;
-        public static final int DELETE_PATIENT = 20;
+        public static final int GET_SNAPSHOT_PATIENTS_AGAIN = 19;
+        public static final int GET_SNAPSHOT_PATIENT_AGAIN = 20;
+        public static final int DELETE_SNAPSHOT = 21;
+        public static final int DELETE_PATIENT = 22;
 
     }
 
@@ -659,6 +661,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
                             everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0].firstName").value(
+                            CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0]._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
                     .andExpect(jsonPath("$._links.keys()",
                             containsInAnyOrder("first", "self", "next", "last")))
                     .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
@@ -751,6 +757,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").doesNotHaveJsonPath())
                     .andExpect(jsonPath("$._links.keys()", hasItems("self", "patches", "diff")))
+                    .andExpect(jsonPath("$.firstName").value(
+                            CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
                     .andReturn();
 
             String content = result.getResponse().getContentAsString();
@@ -766,6 +776,7 @@ public class CrudstarIntegrationTests {
         @Order(2)
         @DisplayName("Should return a snapshot patient's patches")
         public void getSnapshotPatientPatches() throws Exception {
+
             MvcResult result = mvc.perform(get(URLDecoder.decode(patchesLink, StandardCharsets.UTF_8))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
@@ -773,6 +784,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patchModelList").isArray())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].id").doesNotHaveJsonPath())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].patch").exists())
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].path")
+                            .value("/firstName"))
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].value")
+                            .value(CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
                     .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
                     .andExpect(jsonPath("$.page.number").value(0))
                     .andReturn();
@@ -932,6 +947,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
                             everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0].firstName").value(
+                            CrudstarIntegrationTests.this.existingPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0]._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.existingPatientLink)))
                     .andExpect(jsonPath("$._links.keys()",
                             containsInAnyOrder("first", "self", "next", "last")))
                     .andExpect(jsonPath("$._links[*].href", everyItem(containsString("asOf="))))
@@ -1027,6 +1046,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").doesNotHaveJsonPath())
                     .andExpect(jsonPath("$._links.keys()", hasItems("self", "patches", "diff")))
+                    .andExpect(jsonPath("$.firstName").value(
+                            CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
                     .andReturn();
 
             String content = result.getResponse().getContentAsString();
@@ -1049,6 +1072,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patchModelList").isArray())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].id").doesNotHaveJsonPath())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].patch").exists())
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].path")
+                            .value("/firstName"))
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].value")
+                            .value(CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
                     .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
                     .andExpect(jsonPath("$.page.number").value(0))
                     .andReturn();
@@ -1083,6 +1110,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
                             everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0].firstName").value(
+                            CrudstarIntegrationTests.this.existingPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0]._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.existingPatientLink)))
                     .andExpect(jsonPath("$._links.keys()",
                             containsInAnyOrder("first", "self", "next", "last")))
                     .andExpect(jsonPath("$._links[*].href", everyItem(containsString("asOf="))))
@@ -1182,6 +1213,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._links.keys()", hasItems("self", "patches", "previousVersion",
                             "diffAgainstPreviousVersion", "nextVersion", "diffAgainstNextVersion",
                             "diffAgainstLatestVersion", "latestVersion")))
+                    .andExpect(jsonPath("$.firstName").value(
+                            CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
                     .andReturn();
 
             String content = result.getResponse().getContentAsString();
@@ -1205,6 +1240,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patchModelList").isArray())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].id").doesNotHaveJsonPath())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].patch").exists())
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].path")
+                            .value("/firstName"))
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].value")
+                            .value(CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
                     .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
                     .andExpect(jsonPath("$.page.number").value(0))
                     .andReturn();
@@ -1238,6 +1277,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
                     .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
                             everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0].firstName").value(
+                            CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0]._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
                     .andExpect(jsonPath("$._links.keys()",
                             containsInAnyOrder("first", "self", "next", "last")))
                     .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
@@ -1329,6 +1372,10 @@ public class CrudstarIntegrationTests {
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                     .andExpect(jsonPath("$.id").doesNotHaveJsonPath())
                     .andExpect(jsonPath("$._links.keys()", hasItems("self", "patches", "diff")))
+                    .andExpect(jsonPath("$.firstName").value(
+                            CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
                     .andReturn();
 
             String content = result.getResponse().getContentAsString();
@@ -1351,6 +1398,170 @@ public class CrudstarIntegrationTests {
                     .andExpect(jsonPath("$._embedded.patchModelList").isArray())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].id").doesNotHaveJsonPath())
                     .andExpect(jsonPath("$._embedded.patchModelList[*].patch").exists())
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].path")
+                            .value("/firstName"))
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].value")
+                            .value(CrudstarIntegrationTests.this.patchedPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.number").value(0))
+                    .andReturn();
+        }
+    }
+
+    @Order(TestStep.GET_SNAPSHOT_PATIENTS_AGAIN)
+    @Nested
+    @DisplayName("Get Snapshot Patients Again")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class GetSnapshotPatientsAgain {
+
+        private String nextPageLink;
+        private String lastPageLink;
+        private int totalElements;
+        private int totalPages;
+
+        @Test
+        @Order(1)
+        @DisplayName("Should return the first page of snapshot patients")
+        public void getSnapshotPatients() throws Exception {
+
+            MvcResult result = mvc.perform(get("/api/patient/snapshot/" + CrudstarIntegrationTests.this.nowSnapshotId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patientModelList").exists())
+                    .andExpect(jsonPath("$._embedded.patientModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patientModelList.length()").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
+                            everyItem(hasItems("self", "patches"))))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0].firstName").value(
+                            CrudstarIntegrationTests.this.updatedSnapshotPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._embedded.patientModelList[0]._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
+                    .andExpect(jsonPath("$._links.keys()",
+                            containsInAnyOrder("first", "self", "next", "last")))
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.number").value(0))
+                    .andReturn();
+
+            String content = result.getResponse().getContentAsString();
+            JsonNode root = objectMapper.readTree(content);
+
+            JsonNode linkInformation = root.get("_links");
+            JsonNode pageInformation = root.get("page");
+
+            this.nextPageLink = linkInformation.get("next").get("href").textValue();
+            this.lastPageLink = linkInformation.get("last").get("href").textValue();
+            this.totalElements = pageInformation.get("totalElements").intValue();
+            this.totalPages = pageInformation.get("totalPages").intValue();
+        }
+
+        @Test
+        @Order(2)
+        @DisplayName("Should return the next page of snapshot patients")
+        public void getSnapshotPatientsNextPage() throws Exception {
+
+            MvcResult result = mvc.perform(get(nextPageLink)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patientModelList").exists())
+                    .andExpect(jsonPath("$._embedded.patientModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patientModelList.length()").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
+                            everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._links.keys()",
+                            containsInAnyOrder("first", "self", "next", "last", "prev")))
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.totalElements").value(totalElements))
+                    .andExpect(jsonPath("$.page.totalPages").value(totalPages))
+                    .andExpect(jsonPath("$.page.number").value(1))
+                    .andReturn();
+        }
+
+        @Test
+        @Order(3)
+        @DisplayName("Should return the last page of snapshot patients")
+        public void geSnapshotPatientsLastPage() throws Exception {
+
+            int pageLength = totalElements % DEFAULT_PAGE_SIZE;
+            if (pageLength == 0) {
+                pageLength = DEFAULT_PAGE_SIZE;
+            }
+
+            MvcResult result = mvc.perform(get(lastPageLink)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patientModelList").exists())
+                    .andExpect(jsonPath("$._embedded.patientModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patientModelList.length()").value(pageLength))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(pageLength)))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
+                            everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._links.keys()",
+                            containsInAnyOrder("first", "self", "last", "prev")))
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.totalElements").value(totalElements))
+                    .andExpect(jsonPath("$.page.totalPages").value(totalPages))
+                    .andExpect(jsonPath("$.page.number").value(totalPages - 1))
+                    .andReturn();
+        }
+    }
+
+    @Order(TestStep.GET_SNAPSHOT_PATIENT_AGAIN)
+    @Nested
+    @DisplayName("Get Snapshot Patient Again")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class GetSnapshotPatientAgain {
+
+        private String patchesLink;
+
+        @Test
+        @Order(1)
+        @DisplayName("Should return a snapshot patient")
+        public void getSnapshotPatient() throws Exception {
+            MvcResult result = mvc.perform(get(CrudstarIntegrationTests.this.updatedPatientLink
+                            + "/snapshot/" + CrudstarIntegrationTests.this.nowSnapshotId)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._links.keys()", hasItems("self", "patches", "diff")))
+                    .andExpect(jsonPath("$.firstName").value(
+                            CrudstarIntegrationTests.this.updatedSnapshotPatientModel.getFirstName()))
+                    .andExpect(jsonPath("$._links.self.href").value(
+                            startsWith(CrudstarIntegrationTests.this.updatedPatientLink)))
+                    .andReturn();
+
+            String content = result.getResponse().getContentAsString();
+            JsonNode root = objectMapper.readTree(content);
+
+            JsonNode linkInformation = root.get("_links");
+
+            this.patchesLink = linkInformation.get("patches").get("href").textValue()
+                    .replaceAll("\\{.*}", "");
+        }
+
+        @Test
+        @Order(2)
+        @DisplayName("Should return a snapshot patient's patches")
+        public void getSnapshotPatientPatches() throws Exception {
+
+            MvcResult result = mvc.perform(get(URLDecoder.decode(patchesLink, StandardCharsets.UTF_8))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patchModelList").isArray())
+                    .andExpect(jsonPath("$._embedded.patchModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patchModelList[*].patch").exists())
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].path")
+                            .value("/firstName"))
+                    .andExpect(jsonPath("$._embedded.patchModelList[0].patch[0].value")
+                            .value(CrudstarIntegrationTests.this.updatedSnapshotPatientModel.getFirstName()))
                     .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
                     .andExpect(jsonPath("$.page.number").value(0))
                     .andReturn();

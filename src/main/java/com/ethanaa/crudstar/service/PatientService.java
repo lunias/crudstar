@@ -247,7 +247,7 @@ public class PatientService {
 
         LocalDateTime asOf = dateTime;
         if (asOf == null) {
-            asOf = snapshot.getAsOf();
+            asOf = LocalDateTime.now();
         }
 
         return  (Snapshot<PatientEntity>) getAsOfDateTime(patientId, asOf, snapshotId);
@@ -261,7 +261,7 @@ public class PatientService {
 
         LocalDateTime asOf = dateTime;
         if (asOf == null) {
-            asOf = snapshot.getAsOf();
+            asOf = LocalDateTime.now();
         }
         Page<Version<PatientEntity>> patientEntityVersions = getAsOfDateTime(pageable, asOf, snapshotId);
 
