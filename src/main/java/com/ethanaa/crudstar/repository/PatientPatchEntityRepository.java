@@ -33,20 +33,21 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
     Page<PatientPatchEntity> findSnapshotPatches(Pageable pageable, UUID patientId, UUID snapshotId);
 
     @Query(nativeQuery = true,
-            value = "WITH patients_with_patches AS (" +
-                    "  SELECT " +
-                    "    DISTINCT ON (pe.id) pe.id AS patient_entity_id " +
-                    "  FROM " +
-                    "    patient_entity pe " +
-                    "    JOIN patient_patch_entity ppe ON pe.id = ppe.patient_id " +
-                    "  WHERE " +
-                    "    ppe.created_at <= :localDateTime " +
-                    "      AND ppe.snapshot_id IS NULL " +
-                    "  ORDER BY " +
-                    "    pe.id, " +
-                    "    ppe.created_at ASC " +
-                    "  LIMIT " +
-                    "    :pageSize OFFSET :pageNumber * :pageSize" +
+            value = "WITH patients_with_patches AS ( " +
+                    "  SELECT patient_entity_id FROM ( " +
+                    "    SELECT " +
+                    "      DISTINCT ON (ppe.patient_id) ppe.patient_id AS patient_entity_id, ppe.created_at " +
+                    "    FROM " +
+                    "      patient_patch_entity ppe " +
+                    "    WHERE " +
+                    "      ppe.created_at <= :localDateTime " +
+                    "        AND ppe.snapshot_id IS NULL " +
+                    "    ORDER BY " +
+                    "      ppe.patient_id, " +
+                    "      ppe.created_at DESC " +
+                    "  ) distinct_patients " +
+                    "  ORDER BY distinct_patients.created_at DESC " +
+                    "  LIMIT :pageSize OFFSET :pageNumber * :pageSize " +
                     ") " +
                     "SELECT " +
                     "  patient_entity_id, " +
@@ -58,26 +59,26 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
                     "  ppe.created_at <= :localDateTime " +
                     "    AND ppe.snapshot_id IS NULL " +
                     "ORDER BY " +
-                    "  patient_entity_id, " +
                     "  ppe.created_at ASC")
     List<PatientPatchEntity> findPatchesAsOfDateTime(int pageSize, int pageNumber, LocalDateTime localDateTime);
 
     @Query(nativeQuery = true,
-            value = "WITH patients_with_patches AS (" +
-                    "  SELECT " +
-                    "    DISTINCT ON (pe.id) pe.id AS patient_entity_id " +
-                    "  FROM " +
-                    "    patient_entity pe " +
-                    "    JOIN patient_patch_entity ppe ON pe.id = ppe.patient_id " +
-                    "  WHERE " +
-                    "    ppe.created_at <= :localDateTime " +
-                    "      AND (ppe.snapshot_id IS NULL " +
-                    "    OR ppe.snapshot_id = :snapshotId)" +
-                    "  ORDER BY " +
-                    "    pe.id, " +
-                    "    ppe.created_at ASC " +
-                    "  LIMIT " +
-                    "    :pageSize OFFSET :pageNumber * :pageSize" +
+            value = "WITH patients_with_patches AS ( " +
+                    "  SELECT patient_entity_id FROM ( " +
+                    "    SELECT " +
+                    "      DISTINCT ON (ppe.patient_id) ppe.patient_id AS patient_entity_id, ppe.created_at " +
+                    "    FROM " +
+                    "      patient_patch_entity ppe " +
+                    "    WHERE " +
+                    "      ppe.created_at <= :localDateTime " +
+                    "        AND (ppe.snapshot_id IS NULL " +
+                    "      OR ppe.snapshot_id = :snapshotId)" +
+                    "    ORDER BY " +
+                    "      ppe.patient_id, " +
+                    "      ppe.created_at DESC " +
+                    "  ) distinct_patients " +
+                    "  ORDER BY distinct_patients.created_at DESC " +
+                    "  LIMIT :pageSize OFFSET :pageNumber * :pageSize" +
                     ") " +
                     "SELECT " +
                     "  patient_entity_id, " +
@@ -90,7 +91,6 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
                     "    AND (ppe.snapshot_id IS NULL " +
                     "  OR ppe.snapshot_id = :snapshotId) " +
                     "ORDER BY " +
-                    "  patient_entity_id, " +
                     "  ppe.created_at ASC")
     List<PatientPatchEntity> findPatchesAsOfDateTime(int pageSize, int pageNumber,
                                                      LocalDateTime localDateTime, UUID snapshotId);

@@ -113,7 +113,7 @@ public class PatientService {
             return new PageImpl<>(new ArrayList<>());
         }
 
-        Map<UUID, Patient> patientMap = new HashMap<>();
+        Map<UUID, Patient> patientMap = new LinkedHashMap<>();
         Map<UUID, Long> versionsAsOfDateTime = new HashMap<>();
         long version = 1;
         for (PatientPatchEntity patch : patches) {
@@ -144,6 +144,9 @@ public class PatientService {
             patientEntities.add(patientEntity);
             patientEntityIds.add(entry.getKey());
         }
+
+        // applied patches in asc order, but need to return patients in desc order
+        Collections.reverse(patientEntities);
 
         List<Version<PatientEntity>> patientEntityVersions;
         if (snapshotId != null) {

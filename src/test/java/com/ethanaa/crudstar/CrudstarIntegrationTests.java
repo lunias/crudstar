@@ -75,8 +75,10 @@ public class CrudstarIntegrationTests {
         public static final int GET_PATIENT_AS_OF = 14;
         public static final int GET_SNAPSHOT_PATIENTS_AS_OF = 15;
         public static final int GET_SNAPSHOT_PATIENT_AS_OF = 16;
-        public static final int DELETE_SNAPSHOT = 17;
-        public static final int DELETE_PATIENT = 18;
+        public static final int GET_PATIENTS_AGAIN = 17;
+        public static final int GET_PATIENT_AGAIN = 18;
+        public static final int DELETE_SNAPSHOT = 19;
+        public static final int DELETE_PATIENT = 20;
 
     }
 
@@ -1197,6 +1199,152 @@ public class CrudstarIntegrationTests {
         public void getSnapshotPatientPatchesAsOf() throws Exception {
 
             MvcResult result = mvc.perform(get(URLDecoder.decode(patchesLink, StandardCharsets.UTF_8))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patchModelList").isArray())
+                    .andExpect(jsonPath("$._embedded.patchModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patchModelList[*].patch").exists())
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.number").value(0))
+                    .andReturn();
+        }
+    }
+
+    @Order(TestStep.GET_PATIENTS_AGAIN)
+    @Nested
+    @DisplayName("Get Patients Again")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class GetPatientsAgain {
+
+        private String nextPageLink;
+        private String lastPageLink;
+        private int totalElements;
+        private int totalPages;
+
+        @Test
+        @Order(1)
+        @DisplayName("Should return the first page of patients")
+        public void getPatients() throws Exception {
+
+            MvcResult result = mvc.perform(get("/api/patient")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patientModelList").exists())
+                    .andExpect(jsonPath("$._embedded.patientModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patientModelList.length()").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
+                            everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._links.keys()",
+                            containsInAnyOrder("first", "self", "next", "last")))
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.number").value(0))
+                    .andReturn();
+
+            String content = result.getResponse().getContentAsString();
+            JsonNode root = objectMapper.readTree(content);
+
+            JsonNode linkInformation = root.get("_links");
+            JsonNode pageInformation = root.get("page");
+
+            this.nextPageLink = linkInformation.get("next").get("href").textValue();
+            this.lastPageLink = linkInformation.get("last").get("href").textValue();
+            this.totalElements = pageInformation.get("totalElements").intValue();
+            this.totalPages = pageInformation.get("totalPages").intValue();
+        }
+
+        @Test
+        @Order(2)
+        @DisplayName("Should return the next page of patients")
+        public void getPatientsNextPage() throws Exception {
+
+            MvcResult result = mvc.perform(get(nextPageLink)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patientModelList").exists())
+                    .andExpect(jsonPath("$._embedded.patientModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patientModelList.length()").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(DEFAULT_PAGE_SIZE)))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
+                            everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._links.keys()",
+                            containsInAnyOrder("first", "self", "next", "last", "prev")))
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.totalElements").value(totalElements))
+                    .andExpect(jsonPath("$.page.totalPages").value(totalPages))
+                    .andExpect(jsonPath("$.page.number").value(1))
+                    .andReturn();
+        }
+
+        @Test
+        @Order(3)
+        @DisplayName("Should return the last page of patients")
+        public void getPatientsLastPage() throws Exception {
+
+            int pageLength = totalElements % DEFAULT_PAGE_SIZE;
+            if (pageLength == 0) {
+                pageLength = DEFAULT_PAGE_SIZE;
+            }
+
+            MvcResult result = mvc.perform(get(lastPageLink)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$._embedded.patientModelList").exists())
+                    .andExpect(jsonPath("$._embedded.patientModelList[*].id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._embedded.patientModelList.length()").value(pageLength))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.self.href", hasSize(pageLength)))
+                    .andExpect(jsonPath("$._embedded.patientModelList[*]._links.keys()",
+                            everyItem(hasItems("self", "patches", "diff"))))
+                    .andExpect(jsonPath("$._links.keys()",
+                            containsInAnyOrder("first", "self", "last", "prev")))
+                    .andExpect(jsonPath("$.page.size").value(DEFAULT_PAGE_SIZE))
+                    .andExpect(jsonPath("$.page.totalElements").value(totalElements))
+                    .andExpect(jsonPath("$.page.totalPages").value(totalPages))
+                    .andExpect(jsonPath("$.page.number").value(totalPages - 1))
+                    .andReturn();
+        }
+    }
+
+    @Order(TestStep.GET_PATIENT_AGAIN)
+    @Nested
+    @DisplayName("Get Patient Again")
+    @TestInstance(TestInstance.Lifecycle.PER_CLASS)
+    @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+    class GetPatientAgain {
+
+        private String patchesLink;
+
+        @Test
+        @Order(1)
+        @DisplayName("Should return a patient")
+        public void getPatient() throws Exception {
+            MvcResult result = mvc.perform(get(CrudstarIntegrationTests.this.updatedPatientLink)
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andExpect(jsonPath("$.id").doesNotHaveJsonPath())
+                    .andExpect(jsonPath("$._links.keys()", hasItems("self", "patches", "diff")))
+                    .andReturn();
+
+            String content = result.getResponse().getContentAsString();
+            JsonNode root = objectMapper.readTree(content);
+
+            JsonNode linkInformation = root.get("_links");
+
+            this.patchesLink = linkInformation.get("patches").get("href").textValue()
+                    .replaceAll("\\{.*}", "");
+        }
+
+        @Test
+        @Order(2)
+        @DisplayName("Should return a patient's patches")
+        public void getPatientPatches() throws Exception {
+            MvcResult result = mvc.perform(get(patchesLink)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andExpect(status().isOk())
                     .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
