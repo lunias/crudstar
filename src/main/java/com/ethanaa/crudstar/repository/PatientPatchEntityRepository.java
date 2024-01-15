@@ -113,17 +113,15 @@ public interface PatientPatchEntityRepository extends JpaRepository<PatientPatch
     List<PatientPatchEntity> findSnapshotPatches(Collection<UUID> patientIds, UUID snapshotId);
 
     @Query(nativeQuery = true,
-            value = "SELECT COUNT(DISTINCT pe.id) " +
-                    "FROM patient_entity pe " +
-                    "JOIN patient_patch_entity ppe ON pe.id = ppe.patient_id " +
+            value = "SELECT COUNT(DISTINCT ppe.patient_id) " +
+                    "FROM patient_patch_entity ppe " +
                     "WHERE ppe.created_at <= :localDateTime " +
                     "  AND ppe.snapshot_id IS NULL")
     Long countPatientsWithPatchesAsOfDateTime(LocalDateTime localDateTime);
 
     @Query(nativeQuery = true,
-            value = "SELECT COUNT(DISTINCT pe.id) " +
-                    "FROM patient_entity pe " +
-                    "JOIN patient_patch_entity ppe ON pe.id = ppe.patient_id " +
+            value = "SELECT COUNT(DISTINCT ppe.patient_id) " +
+                    "FROM patient_patch_entity ppe " +
                     "WHERE ppe.created_at <= :localDateTime " +
                     "  AND (ppe.snapshot_id IS NULL " +
                     "  OR ppe.snapshot_id = :snapshotId)")
